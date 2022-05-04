@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 5px;
+      }
+      ::selection {
+        color: #fff;
+        background: #6665ee;
+      }
+      .wrapper {
+        background: #fff;
+        border-radius: 15px;
+        padding: 25px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1);
+      }
+      .wrapper header {
+        font-size: 16px;
+        font-weight: 500;
+      }
+      .wrapper .poll-area {
+        margin: 10px 0 10px 0;
+      }
+      .poll-area label {
+        display: block;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        padding: 8px 15px;
+        border: 2px solid #e6e6e6;
+        transition: all 0.2s ease;
+      }
+      .poll-area label:hover {
+        border-color: #ddd;
+      }
+      label.selected {
+        border-color: #6665ee !important;
+      }
+      label .row {
+        display: flex;
+        pointer-events: none;
+        justify-content: space-between;
+      }
+      label .row .column {
+        display: flex;
+        align-items: center;
+      }
+      label .row .circle {
+        height: 19px;
+        width: 19px;
+        display: block;
+        border: 2px solid #ccc;
+        border-radius: 50%;
+        margin-right: 10px;
+        position: relative;
+      }
+      label.selected .row .circle {
+        border-color: #6665ee;
+      }
+      label .row .circle::after {
+        content: "";
+        height: 11px;
+        width: 11px;
+        background: #6665ee;
+        border-radius: inherit;
+        position: absolute;
+        left: 2px;
+        top: 2px;
+        display: none;
+      }
+      .poll-area label:hover .row .circle::after {
+        display: block;
+        background: #e6e6e6;
+      }
+      label.selected .row .circle::after {
+        display: block;
+        background: #6665ee !important;
+      }
+      label {
+        font-size: 13px;
+        font-weight: 400;
+      }
+      label .row .percent {
+        display: none;
+      }
+      label .progress {
+        height: 7px;
+        width: 100%;
+        position: relative;
+        background: #f0f0f0;
+        margin: 8px 0 3px 0;
+        border-radius: 30px;
+        display: none;
+        pointer-events: none;
+      }
+      label .progress:after {
+        position: absolute;
+        content: "";
+        height: 100%;
+        background: #ccc;
+        width: calc(1% * var(--w));
+        border-radius: inherit;
+        transition: all 0.2s ease;
+      }
+      label.selected .progress::after {
+        background: #6665ee;
+      }
+      label.selectall .progress,
+      label.selectall .row .percent {
+        display: block;
+      }
+      input[type="radio"],
+      input[type="checkbox"] {
+        display: none;
+      }
+
+      input[type="text"] {
+        border-radius: 5px;
+        padding: 4px 8px;
+        font-weight: 400;
+        font-size: 13px;
+        width: 100%;
+        border: 2px solid #e6e6e6;
+      }
+      input[type="text"]:focus {
+        outline: none !important;
+        border: 2px solid #6665ee;
+      }
+
+      .button {
+        display: inline-block;
+        font-size: 13px;
+        font-weight: 400;
+        text-align: center;
+        border-radius: 5px;
+        width: 50%;
+        height: 40px;
+        background-color: inherit;
+        border: 2px solid #6665ee;
+        cursor: pointer;
+        text-decoration: none;
+        transition-duration: 0.4s;
+      }
+      .button:hover {
+        color: #fff;
+        background-color: #6665ee;
+      }
+
+      .group {
+        margin-top: 10px;
+      }
+      .group input[type="text"] {
+        margin-top: 5px;
+      }
+      .group span {
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .error {
+        margin-top: 10px;
+        color: #f00;
+        font-size: 12px;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="poll-setup" class="wrapper">
+      <header>Create your poll</header>
+      <div class="group">
+        <span>Subject</span>
+        <input id="poll-subject" type="text" />
+      </div>
+      <div class="group" style="text-align: right">
+        <button class="button" onclick="addOption()">Add Option</button>
+      </div>
+      <div id="option-wrapper"></div>
+      <div class="group" style="text-align: right">
+        <button class="button" onclick="beginPoll()">Begin Poll</button>
+      </div>
+      <div class="error" id="error"></div>
+    </div>
+    <div id="poll-results" class="wrapper" style="display: none">
+      <header>Poll Results</header>
+      <div class="group"><span id="poll-title"></span></div>
+      <div id="poll-wrapper" class="poll-area"></div>
+    </div>
+
+    <script>
+      let _showingResults = false;
+      let _optionIndex = 0;
+
+      let _userId = "";
+      let _widgetData = { pollSubject: "", pollOptions: [], votes: [] };
+
+      window.onload = function () {
+        setTimeout(async () => {
+          updateIframeHeight();
+          const userProfile = await Adobe.getUserProfile();
+          if (userProfile && userProfile.userId) {
+            _userId = userProfile.userId;
+          }
+
+          const widgetData = await Adobe.getWidgetData();
+          dataUpdated(widgetData);
+          Adobe.subscribeToWidgetData(dataUpdated);
+        }, 0);
+      };
+
+      function updateIframeHeight() {
+        const expectedHeight = window.document
+          .getElementsByTagName("html")[0]
+          .getBoundingClientRect().height;
+        if (expectedHeight > 0) {
+          Adobe.updateWidgetSize({ height: expectedHeight, width: 300 });
+        }
+      }
+
+      function dataUpdated(widgetData) {
+        _widgetData = { ...widgetData };
+        if (
+          widgetData &&
+          widgetData.pollSubject &&
+          widgetData.pollOptions &&
+          widgetData.votes
+        ) {
+          if (!_showingResults) {
+            createPoll();
+            stylizePoll();
+            showResults();
+          }
+
+          const votePercentages = getVotePercentages(
+            _widgetData.pollOptions,
+            _widgetData.votes
+          );
+          for (let i = 0; i < _widgetData.pollOptions.length; i++) {
+            document.getElementById(
+              `option-percent-${i}`
+            ).innerHTML = `${votePercentages[i]}%`;
+            document
+              .getElementById(`option-progress-${i}`)
+              .setAttribute("style", `--w: ${votePercentages[i]}`);
+          }
+        }
+      }
+
+      function addOption() {
+        _optionIndex++;
+
+        const optionWrapper = document.getElementById("option-wrapper");
+        const optionElement = document.createElement("div");
+
+        const group = document.createElement("div");
+        group.setAttribute("class", "group");
+
+        const optionLabel = document.createElement("span");
+        optionLabel.innerHTML = `Option ${_optionIndex}`;
+
+        const pollOption = document.createElement("input");
+        pollOption.setAttribute("type", "text");
+        pollOption.setAttribute("id", `poll-option-${_optionIndex}`);
+
+        group.appendChild(optionLabel);
+        group.appendChild(pollOption);
+
+        optionElement.appendChild(group);
+        optionWrapper.appendChild(optionElement);
+      }
+
+      function createPoll() {
+        document.getElementById("poll-title").innerHTML =
+          _widgetData.pollSubject;
+
+        const pollWrapper = document.getElementById("poll-wrapper");
+
+        _widgetData.pollOptions.forEach((_, i) => {
+          const checkbox = document.createElement("input");
+          checkbox.setAttribute("type", "checkbox");
+          checkbox.setAttribute("name", "poll");
+          checkbox.setAttribute("id", `option-${i}`);
+
+          pollWrapper.appendChild(checkbox);
+        });
+
+        const votePercentages = getVotePercentages(
+          _widgetData.pollOptions,
+          _widgetData.votes
+        );
+
+        _widgetData.pollOptions.forEach((pollOption, i) => {
+          const label = document.createElement("label");
+          label.setAttribute("for", `option-${i}`);
+
+          const row = document.createElement("div");
+          row.setAttribute("class", "row");
+
+          const column = document.createElement("div");
+          column.setAttribute("class", "column");
+
+          const circle = document.createElement("span");
+          circle.setAttribute("class", "circle");
+
+          const text = document.createElement("span");
+          text.setAttribute("class", "text");
+          text.innerHTML = pollOption.value;
+
+          column.appendChild(circle);
+          column.appendChild(text);
+
+          const percent = document.createElement("span");
+          percent.setAttribute("id", `option-percent-${i}`);
+          percent.setAttribute("class", "percent");
+          percent.innerHTML = `${votePercentages[i]}%`;
+
+          row.appendChild(column);
+          row.appendChild(percent);
+
+          const progress = document.createElement("div");
+          progress.setAttribute("id", `option-progress-${i}`);
+          progress.setAttribute("class", "progress");
+          progress.setAttribute("style", `--w: ${votePercentages[i]}`);
+
+          label.appendChild(row);
+          label.appendChild(progress);
+
+          pollWrapper.appendChild(label);
+        });
+      }
+
+      function stylizePoll() {
+        const options = document.querySelectorAll("label");
+        for (let i = 0; i < options.length; i++) {
+          options[i].addEventListener("click", () => {
+            for (let j = 0; j < options.length; j++) {
+              if (options[j].classList.contains("selected")) {
+                options[j].classList.remove("selected");
+              }
+            }
+
+            options[i].classList.add("selected");
+            for (let k = 0; k < options.length; k++) {
+              options[k].classList.add("selectall");
+            }
+
+            let forVal = options[i].getAttribute("for");
+            let selectInput = document.querySelector("#" + forVal);
+            let getAtt = selectInput.getAttribute("type");
+
+            if (getAtt == "checkbox") {
+              selectInput.setAttribute("type", "radio");
+            } else if (selectInput.checked == true) {
+              options[i].classList.remove("selected");
+              selectInput.setAttribute("type", "checkbox");
+            }
+
+            let selected = [];
+            for (let l = 0; l < options.length; l++) {
+              if (options[l].classList.contains("selected")) {
+                selected = [...selected, l];
+              }
+            }
+
+            if (selected.length == 0) {
+              for (let m = 0; m < options.length; m++) {
+                options[m].removeAttribute("class");
+              }
+            }
+
+            if (selected.length > 0) {
+              _widgetData.votes = upsertVotes(
+                _widgetData.votes,
+                _userId,
+                selected[0]
+              );
+            } else {
+              _widgetData.votes = upsertVotes(_widgetData.votes, _userId, -1);
+            }
+
+            Adobe.setWidgetData(_widgetData);
+          });
+        }
+      }
+
+      function showResults() {
+        _showingResults = true;
+
+        document
+          .getElementById("poll-setup")
+          .setAttribute("style", "display: none");
+        document
+          .getElementById("poll-results")
+          .setAttribute("style", "display: block");
+      }
+
+      function beginPoll() {
+        resetPoll();
+
+        _widgetData.pollSubject = document.getElementById("poll-subject").value;
+        if (
+          !_widgetData.pollSubject ||
+          _widgetData.pollSubject.trim().length === 0
+        ) {
+          showError("Poll should have a subject.");
+          return;
+        }
+
+        for (let i = 1; i <= _optionIndex; i++) {
+          const id = `poll-option-${i}`;
+          const value = document.getElementById(id).value;
+
+          if (value && value.trim().length > 0) {
+            _widgetData.pollOptions = [
+              ..._widgetData.pollOptions,
+              { id, value },
+            ];
+          }
+        }
+
+        if (_widgetData.pollOptions.length < 2) {
+          showError("Poll should have a minimum of 2 options.");
+          return;
+        }
+
+        _widgetData.votes = [{ userId: _userId, pollOptionIndex: -1 }];
+        Adobe.setWidgetData(_widgetData);
+      }
+
+      function upsertVotes(votes, userId, pollOptionIndex) {
+        const index = votes.findIndex((vote) => vote.userId === userId);
+        if (index > -1) {
+          return votes.map((vote, i) =>
+            i === index ? { ...vote, pollOptionIndex } : vote
+          );
+        } else {
+          return [...votes, { userId, pollOptionIndex }];
+        }
+      }
+
+      function getVotePercentages(pollOptions, pollVotes) {
+        const votes = [];
+        const votePercentages = [];
+        for (let i = 0; i < pollOptions.length; i++) {
+          votes.push(0);
+          votePercentages.push(0);
+        }
+
+        let voters = 0;
+        pollVotes.forEach((vote) => {
+          if (vote.pollOptionIndex > -1) {
+            votes[vote.pollOptionIndex]++;
+            voters++;
+          }
+        });
+
+        if (voters === 0) {
+          return votePercentages;
+        }
+
+        for (let i = 0; i < votes.length; i++) {
+          votePercentages[i] = Math.round((votes[i] / voters) * 100);
+        }
+
+        return votePercentages;
+      }
+
+      function resetPoll() {
+        _widgetData.pollSubject = "";
+        _widgetData.pollOptions = [];
+
+        const error = document.getElementById("error");
+        error.setAttribute("style", "display: none");
+        error.innerHTML = "";
+
+        document.getElementById("poll-title").innerHTML = "";
+        document.getElementById("poll-wrapper").innerHTML = "";
+      }
+
+      function showError(message) {
+        const error = document.getElementById("error");
+        error.setAttribute("style", "display: block");
+        error.innerHTML = `* ${message}`;
+      }
+    </script>
+  </body>
+</html>

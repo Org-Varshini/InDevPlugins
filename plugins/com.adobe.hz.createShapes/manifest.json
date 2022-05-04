@@ -1,0 +1,12 @@
+{
+    "name": "Create Shapes",
+    "id": "com.adobe.hz.createShapes",
+    "main": "code.js",
+    "editorType": [
+        "canvas"
+    ],
+    "ui": "ui.html",
+    "type": "panel",
+    "icon": "ccweb.png",
+    "runtime": "QuickJS"
+}

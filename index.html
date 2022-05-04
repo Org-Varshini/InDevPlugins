@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>In-Development Plugins</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+      * {
+        font-family: "Poppins", sans-serif;
+      }
+      body {
+        margin: 40pt;
+        padding: 20pt;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>In-Development Plugins</h3>
+    <hr />
+    <ul id="plugins"></ul>
+    <script>
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          const plugins = JSON.parse(xhttp.responseText);
+          if (!plugins || plugins.length === 0) {
+            return;
+          }
+
+          const pluginList = document.getElementById("plugins");
+          plugins.forEach((plugin) => {
+            const pluginItem = document.createElement("li");
+            pluginItem.innerHTML = plugin.id;
+            pluginList.append(pluginItem);
+          });
+        }
+      };
+      xhttp.open("GET", "/pluginManifests", true);
+      xhttp.send();
+    </script>
+  </body>
+</html>

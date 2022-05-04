@@ -1,0 +1,32 @@
+{
+  "name": "sample-plugin",
+  "version": "1.0.0",
+  "description": "Starter application for a plugin.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "clean": "rimraf dist",
+    "start": "tsc && cp -R ./index.html dist && node ."
+  },
+  "keywords": [],
+  "author": "Adobe",
+  "license": "ISC",
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.2",
+    "node": "^17.4.0",
+    "shelljs": "^0.8.5",
+    "typescript": "^4.5.5",
+    "ws": "^8.4.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.13",
+    "@types/node": "^17.0.14",
+    "@types/shelljs": "^0.8.11",
+    "@types/ws": "^8.2.2",
+    "rimraf": "^3.0.2"
+  }
+}
