@@ -5,8 +5,8 @@
 /* global Adobe: readonly -- Declared by the managed-ui.ts runtime */
 /* global hz: readonly -- Declared by the async.ts plugin runtime */
 
-//let colorRGBA = "#73218ccc";
-let colorRGBA = "#3826a8ccc";
+let colorRGBA = "#73218ccc";
+// let colorRGBA = "#3826a8ccc";
 let numPetals = 15;
 let centerDiameter = 110;
 let minOuterDiameter = centerDiameter + 1;
